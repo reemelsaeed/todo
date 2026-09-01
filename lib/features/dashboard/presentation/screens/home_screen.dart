@@ -3,8 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:todo_app/features/Authentication/data/models/userModel.dart';
 import 'package:todo_app/features/dashboard/logic/cubit/dashboard_cubit_cubit.dart';
 import 'package:todo_app/features/dashboard/presentation/widgets/home_header_widget.dart';
-import 'package:todo_app/features/dashboard/presentation/widgets/status_filter_widget.dart';
 import 'package:todo_app/features/dashboard/presentation/widgets/task_card_widget.dart';
+import 'package:todo_app/features/tasks/presentation/screens/addTask_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Usermodel user;
@@ -38,14 +38,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
               // const StatusFilterChips(),
               const SizedBox(height: 20),
               Expanded(
-                child: BlocBuilder<DashboardCubitCubit, DashboardCubitState>(
+                child: BlocConsumer<DashboardCubitCubit, DashboardCubitState>(
+                  listener: (context, state) {
+                    if (state is DashboardCubitFailuer) {
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(state.message)));
+                    }
+                  },
                   builder: (context, state) {
                     if (state is DashboardCubitILoading) {
                       return const Center(child: CircularProgressIndicator());
                     }
 
                     if (state is DashboardCubitFailuer) {
-                      return Center(child: Text(state.message));
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              color: Colors.redAccent,
+                              size: 40,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              state.message,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: Colors.black54),
+                            ),
+                            const SizedBox(height: 16),
+                            TextButton(
+                              onPressed: () => context
+                                  .read<DashboardCubitCubit>()
+                                  .getTasks(),
+                              child: const Text('Retry'),
+                            ),
+                          ],
+                        ),
+                      );
                     }
 
                     if (state is DashboardCubitSuccess) {
@@ -60,8 +91,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         },
                       );
                     }
-
-                    // الحالة الابتدائية (Initial) قبل أي حاجة تحصل
                     return const SizedBox.shrink();
                   },
                 ),
@@ -71,7 +100,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () async {
+          final newTask = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AddtaskScreen()),
+          );
+
+          if (newTask != null) {
+            context.read<DashboardCubitCubit>().createTask(newTask);
+          }
+        },
         backgroundColor: const Color(0xFF007AFF),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         child: const Icon(Icons.add, color: Colors.white),

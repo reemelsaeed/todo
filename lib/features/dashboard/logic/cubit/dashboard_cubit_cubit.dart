@@ -19,4 +19,19 @@ class DashboardCubitCubit extends Cubit<DashboardCubitState> {
       emit(DashboardCubitFailuer(e.toString()));
     }
   }
+
+  //____________________________________________________________
+  Future<void> createTask(Taskmodel task) async {
+    try {
+      final newTask = await homeRepo.createTask(task);
+
+      if (state is DashboardCubitSuccess) {
+        final currentTasks = (state as DashboardCubitSuccess).tasks;
+        final updatedTasks = [...currentTasks, newTask];
+        emit(DashboardCubitSuccess(updatedTasks));
+      }
+    } catch (e) {
+      emit(DashboardCubitFailuer(e.toString()));
+    }
+  }
 }
